@@ -1,13 +1,14 @@
+#include "linux_parser.h"
+
 #include <dirent.h>
 #include <unistd.h>
+
 #include <string>
 #include <vector>
 
-#include "linux_parser.h"
-
 using std::stof;
-using std::stol;
 using std::stoi;
+using std::stol;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -89,7 +90,7 @@ float LinuxParser::MemoryUtilization() {
       }
     }
   }
-  return (stof(mtotal)-stof(mfree)) / stof(mtotal);
+  return (stof(mtotal) - stof(mfree)) / stof(mtotal);
 }
 
 // Read and return the system uptime
@@ -110,8 +111,9 @@ long LinuxParser::Jiffies() {
   vector<string> values = LinuxParser::CpuUtilization();
   vector<long> valueslong(10, 0);
   long total = 0;
-  vector<CPUStates> all = {kUser_, kNice_, kSystem_, kIdle_, kIOwait_, kIRQ_, kSoftIRQ_, kSteal_};
-  for (int i : all) { // All non-guest values
+  vector<CPUStates> all = {kUser_,   kNice_, kSystem_,  kIdle_,
+                           kIOwait_, kIRQ_,  kSoftIRQ_, kSteal_};
+  for (int i : all) {  // All non-guest values
     valueslong[i] = stol(values[i]);
     total += valueslong[i];
   };
@@ -138,30 +140,14 @@ long LinuxParser::ActiveJiffies() {
   vector<string> jiffies = CpuUtilization();
   return stol(jiffies[CPUStates::kUser_]) + stol(jiffies[CPUStates::kNice_]) +
          stol(jiffies[CPUStates::kSystem_]) + stol(jiffies[CPUStates::kIRQ_]) +
-         stol(jiffies[CPUStates::kSoftIRQ_]) + stol(jiffies[CPUStates::kSteal_]);
+         stol(jiffies[CPUStates::kSoftIRQ_]) +
+         stol(jiffies[CPUStates::kSteal_]);
 }
 
 // Read and return the number of idle jiffies for the system
 long LinuxParser::IdleJiffies() {
   vector<string> jiffies = CpuUtilization();
   return stol(jiffies[CPUStates::kIdle_]) + stol(jiffies[CPUStates::kIOwait_]);
-}
-
-// Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() {
-  string line, value;
-  string key;
-  vector<string> values;
-  std::ifstream stream(kProcDirectory + kStatFilename);
-  if (stream.is_open()) {
-    std::getline(stream, line);
-    std::istringstream linestream(line);
-    linestream >> key;
-    while (linestream >> value) {
-      values.push_back(value);
-    };
-  }
-  return values;
 }
 
 // Read and return the total number of processes
@@ -200,6 +186,23 @@ int LinuxParser::RunningProcesses() {
     }
   }
   return 0;
+}
+
+// Read and return CPU utilization
+vector<string> LinuxParser::CpuUtilization() {
+  string line, value;
+  string key;
+  vector<string> values;
+  std::ifstream stream(kProcDirectory + kStatFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> key;
+    while (linestream >> value) {
+      values.push_back(value);
+    };
+  }
+  return values;
 }
 
 // Read and return the command associated with a process
@@ -267,7 +270,8 @@ string LinuxParser::User(int pid) {
       }
     }
   }
-  return "unknown"; }
+  return "unknown";
+}
 
 // Read and return the uptime of a process
 long LinuxParser::UpTime(int pid) {
